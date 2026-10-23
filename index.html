@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>ORION Predictor</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d30;--line:#29364b;--text:#edf3ff;--muted:#a9b8cf;--accent:#75a7ff;--good:#7de0b1;--warn:#ffd17a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:980px;margin:auto;padding:18px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-size:1.5rem;font-weight:800;letter-spacing:.04em}.sub,.muted{color:var(--muted)}.pill{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:.85rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px}.card h2{font-size:1rem;margin:0 0 12px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}label{display:block;color:var(--muted);font-size:.88rem;margin:8px 0 5px}input,select,button{font:inherit;border-radius:10px;padding:10px;border:1px solid var(--line);background:#0c1525;color:var(--text);max-width:100%}input,select{width:100%}button{cursor:pointer;background:#203c66;border-color:#365b90;font-weight:700}button.secondary{background:#172337}button.danger{background:#512b35;border-color:#874553}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.big{font-size:1.6rem;font-weight:800}.metric{font-size:1.3rem;font-weight:750}.good{color:var(--good)}.warn{color:var(--warn)}.digits{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px;margin-top:10px}.digit{background:#0b1424;border:1px solid var(--line);border-radius:8px;text-align:center;padding:7px 0}.digit b{display:block;font-size:1rem}.digit small{color:var(--muted);font-size:.7rem}table{width:100%;border-collapse:collapse;font-size:.86rem}td,th{text-align:left;border-bottom:1px solid var(--line);padding:8px 5px}th{color:var(--muted)}.tablewrap{overflow:auto}.status{padding:9px 11px;background:#0c1525;border:1px solid var(--line);border-radius:10px;margin-top:10px;overflow-wrap:anywhere}.notice{font-size:.88rem;line-height:1.5;color:var(--muted)}.hidden{display:none}.footer{font-size:.8rem;color:var(--muted);margin:20px 0}.tag{font-size:.8rem;border-radius:7px;padding:3px 6px;background:#24334b}
+</style>
+</head>
+<body><main>
+<div class="head"><div><div class="brand">ORION PREDICTOR</div><div class="sub">Digit Match analysis · signals only · no trades</div></div><div id="conn" class="pill">Disconnected</div></div>
+<div class="status" id="status">Choose markets and connect to Deriv public market data. No account token is needed.</div>
+<div class="grid">
+<section class="card">
+<h2>Configuration</h2>
+<label for="appId">Deriv App ID (optional, if your connection requires one)</label><input id="appId" inputmode="numeric" placeholder="Enter App ID or leave blank">
+<label for="markets">Markets</label><select id="markets" multiple size="6">
+<option value="R_10">Volatility 10 Index (R_10)</option><option value="R_25">Volatility 25 Index (R_25)</option><option value="R_50">Volatility 50 Index (R_50)</option><option value="R_75">Volatility 75 Index (R_75)</option><option value="R_100">Volatility 100 Index (R_100)</option><option value="1HZ10V">Volatility 10 (1s) Index</option><option value="1HZ25V">Volatility 25 (1s) Index</option><option value="1HZ50V">Volatility 50 (1s) Index</option><option value="1HZ75V">Volatility 75 (1s) Index</option><option value="1HZ100V">Volatility 100 (1s) Index</option>
+</select>
+<label for="threshold">Minimum estimated probability (%)</label><input id="threshold" type="number" min="10" max="100" step="1" value="90">
+<label for="windowSize">Rolling history window</label><select id="windowSize"><option>100</option><option>250</option><option>500</option><option selected>1000</option></select>
+<div class="buttons"><button id="connect">Connect & load history</button><button id="stop" class="secondary">Disconnect</button></div>
+<p class="notice">Markets are selectable. If a symbol is unavailable, the app will show an API error rather than silently substituting another market.</p>
+</section>
+<section class="card">
+<h2>Current signal</h2><div class="muted">Market</div><div id="sigMarket" class="metric">—</div>
+<div class="muted" style="margin-top:10px">Candidate digit</div><div id="sigDigit" class="big">—</div>
+<div class="muted">Estimated historical frequency</div><div id="sigProb" class="metric">—</div>
+<div id="sigState" class="status">No signal yet.</div>
+<p class="notice">Frequency is descriptive, not a dependable forecast of the next digit. A 90% threshold will normally produce no signals.</p>
+</section>
+<section class="card">
+<h2>Accuracy tracker</h2><div class="muted">Walk-forward predictions scored</div><div class="metric" id="nPred">0</div>
+<div class="muted" style="margin-top:8px">Exact-digit hit rate</div><div class="metric" id="hitRate">—</div>
+<div class="muted" style="margin-top:8px">Signals issued / signal hit rate</div><div class="metric" id="sigStats">0 / —</div>
+<div class="muted" style="margin-top:8px">Recent ticks loaded</div><div class="metric" id="nTicks">0</div>
+<div class="buttons"><button id="export" class="secondary">Export CSV</button><button id="reset" class="secondary">Reset stats</button></div>
+</section>
+<section class="card">
+<h2>Digit distribution · latest window</h2><div class="notice">Frequency of digits in the most recent loaded/live ticks.</div><div id="digits" class="digits"></div>
+</section>
+</div>
+<section class="card">
+<h2>Backtest and live evaluation log</h2>
+<div class="notice">Backtest uses only earlier ticks to estimate the next digit. It tests a rolling-frequency baseline, not a proven predictive edge. Live evaluation records each next tick after a candidate prediction.</div>
+<div class="tablewrap"><table><thead><tr><th>Time</th><th>Market</th><th>Predicted</th><th>Est. freq.</th><th>Actual</th><th>Result</th><th>Type</th></tr></thead><tbody id="log"></tbody></table></div>
+</section>
+<div class="footer">ORION Predictor is analysis-only. It never places trades. Data and stats remain in this browser session and can be exported as CSV. Not financial advice.</div>
+</main>
+<script src="/app.js"></script></body></html>
